@@ -2,7 +2,7 @@ name: 국군복지포털 공지사항 카톡 알림봇
 
 on:
   schedule:
-    - cron: "*/20 * * * *"
+    - cron: "*/5 * * * *"
   workflow_dispatch:
     inputs:
       test_kakao:
