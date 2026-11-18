@@ -1,0 +1,51 @@
+name: 국군복지포털 공지사항 카톡 알림봇
+
+on:
+  schedule:
+    - cron: "*/20 * * * *"
+  workflow_dispatch:
+    inputs:
+      test_kakao:
+        description: "테스트로 최신 공지 1건을 지금 내 카톡으로 보내기"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  check-notice:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: 국군복지포털_카톡알림봇_2026-11-18
+    steps:
+      - name: 저장소 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Python 설치
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 패키지 설치
+        run: pip install -r requirements.txt
+
+      - name: 국군복지포털 공지 확인 및 카톡 발송
+        env:
+          KAKAO_REST_API_KEY: ${{ secrets.KAKAO_REST_API_KEY }}
+          KAKAO_REFRESH_TOKEN: ${{ secrets.KAKAO_REFRESH_TOKEN }}
+          KAKAO_CLIENT_SECRET: ${{ secrets.KAKAO_CLIENT_SECRET }}
+          FORCE_TEST_SEND: ${{ inputs.test_kakao }}
+        run: python check_welfare.py
+
+      - name: 확인한 공지 목록(seen_notices.json) 저장
+        run: |
+          if ! git diff --quiet seen_notices.json; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add seen_notices.json
+            git commit -m "chore: update seen notices [skip ci]"
+            git push
+          fi
